@@ -113,6 +113,8 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 .result-card{border:1px solid #dfe6e1;border-radius:10px;padding:12px;margin-top:10px;}
 .result-card.best{background:var(--c-best);border-color:var(--c-best-b);}
 .result-title{font-size:16px;overflow-wrap:anywhere;}
+.entry-date{font-size:14px;color:#52675b;margin-top:5px;}
+input[type="date"]{appearance:none;-webkit-appearance:none;min-height:48px;width:100%;max-width:100%;}
 .result-card .unit-price{border:0;padding-top:0;margin-top:8px;}
 .result-badge{display:none;font-size:13px;color:#8b4b00;}
 .result-card.best .result-badge{display:block;}
@@ -128,6 +130,9 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 .small-button{border:1px solid #c6ddcd;border-radius:10px;background:#f2faf5;color:#215c3b;padding:10px 12px;min-height:44px;font:inherit;font-size:14px;cursor:pointer;}
 .product-tools label{font-size:14px;margin-top:10px;}
 .favorite-picker{font-size:16px;}
+.search-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:8px;margin-top:4px;}
+.search-buttons .market-search{display:block;width:100%;min-width:0;min-height:52px;margin:0;padding:10px 6px;line-height:1.5;font-size:14px;overflow-wrap:anywhere;}
+.search-help{display:block;font-size:13px;color:#56665e;margin:5px 0 14px;line-height:1.6;}
 .utility-panel{background:#fff;border-radius:14px;margin:16px 0;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .favorite-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #e3e7ea;padding:12px 0;}
 .favorite-row>div{min-width:0;overflow-wrap:anywhere;}
@@ -137,6 +142,10 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 .equal-amount{padding:10px;margin-top:10px;border-radius:8px;background:#f2f6f3;font-size:14px;color:#28533b;line-height:1.7;overflow-wrap:anywhere;}
 .equal-amount:empty{display:none;}
 .equal-amount small{display:block;font-size:13px;}
+.same-amount-guide{margin-top:14px;padding:12px;background:#eef8f2;border:1px solid #cde5d7;border-radius:10px;}
+.same-amount-guide h3{font-size:16px;color:#1b5c3b;line-height:1.6;}
+.equal-amount-title{display:block;font-size:14px;font-weight:700;color:#175c37;margin-bottom:5px;}
+#same-amount-status{font-size:14px;color:#315e43;margin-top:6px;}
 #backup-status{margin-top:8px;font-size:14px;overflow-wrap:anywhere;}
 .backup-link{display:inline-block;min-height:44px;padding:8px;color:#12693b;text-decoration:underline;}
 .backup-link[hidden]{display:none;}
@@ -179,6 +188,14 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
     <span class="error-message" id="tax-error"></span>
   </div>
 </section>
+<section class="card" aria-labelledby="search-mode-title">
+  <h2 id="search-mode-title">検索する言葉（全商品共通）</h2>
+  <div class="tax-row" role="group" aria-label="検索する言葉を選択">
+    <button type="button" class="chip on" id="search-mode-name" aria-pressed="true" onclick="setSearchMode('name')">商品名のみ</button>
+    <button type="button" class="chip" id="search-mode-quantity" aria-pressed="false" onclick="setSearchMode('quantity')">商品名＋量</button>
+  </div>
+  <p class="help" id="search-mode-help" role="status" aria-live="polite">商品名だけで検索します。店名は含めません。4サイト共通です。</p>
+</section>
 
 <div class="swipe-toolbar">
   <button class="swipe-button" id="previous-product" onclick="moveProduct(-1)" aria-label="前の商品へ" aria-controls="items">‹</button>
@@ -195,7 +212,12 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
   <label for="result-sort" style="margin-top:12px">結果の並び順</label>
   <select id="result-sort" onchange="changeResultSort(this.value)" aria-describedby="result-sort-help"><option value="input">入力した順</option><option value="cheap">単価が安い順</option></select>
   <span class="help" id="result-sort-help">入力カードの順番は変わりません。違う種類の単位は、種類ごとに分けて並べます。</span>
-  <details class="examples"><summary>「同じ量なら」の見方</summary><p class="help">単位の種類ごとに、先頭の商品と同じ合計量にそろえた税込の目安金額と差額を表示します。端数の量を実際に買えるという意味ではありません。</p></details>
+  <section class="same-amount-guide" aria-labelledby="same-amount-title">
+    <h3 id="same-amount-title">⑨ 同じ量を買った場合の差額</h3>
+    <p class="help">同じ量にそろえると、最安の商品と何円違うかを各商品の下に表示します。</p>
+    <p id="same-amount-status" role="status" aria-live="polite"></p>
+    <details class="examples"><summary>計算例・基準について</summary><p class="help">例：Aは1,000mlで600円、Bは500mlで250円。1,000mlにそろえるとAは600円、Bは500円で、Aは100円高くなります。</p><p class="help">同じ種類の単位ごとに、入力順の先頭商品の合計量が基準です。表示順を変えても基準は変わりません。税込の比例計算による目安なので、端数の量を実際に買えるという意味ではありません。</p></details>
+  </section>
   <div id="result-list"></div>
 </section>
 <button class="btn btn-save" onclick="saveHistory()">💾 この比較を保存</button>
@@ -210,7 +232,7 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 </div>
 
 <details class="utility-panel" id="favorites-panel"><summary id="favorites-summary">お気に入りの商品</summary>
-  <p class="help">各商品の「コピー・お気に入り」から登録できます。値段は保存せず、選んだ後に入力します。</p>
+  <p class="help">各商品の「コピー・お気に入り」から、店名・商品名・記録日・容量・個数・値段を登録できます。呼び出すと値段も入力されます。税込・税抜の設定が違う場合は、今の設定に合わせて換算します。</p>
   <div id="favorite-list"></div>
 </details>
 <details class="utility-panel" id="backup-panel"><summary>バックアップ・読み込み</summary>
@@ -272,6 +294,7 @@ function compare(results){
 
 let taxMode="none", seq=0, items=[];
 let favorites=[],resultSort="input",backupBlobURL=null;
+let searchMode='name';
 const FAVORITES_KEY="tankakazu_favorites", VIEW_KEY="tankakazu_view";
 const $=id=>document.getElementById(id);
 
@@ -287,9 +310,27 @@ function setTax(mode){
   render();
   saveDraft();
 }
+function localEntryDate(){
+  const date=new Date();
+  return String(date.getFullYear()).padStart(4,'0')+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
+}
+function normalizeEntryDate(value){
+  if(value===undefined||value==='')return '';
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value))throw new Error('記録日が不正です');
+  const year=Number(value.slice(0,4)),month=Number(value.slice(5,7)),day=Number(value.slice(8,10));
+  const leap=year%4===0&&(year%100!==0||year%400===0);
+  const days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+  if(year<1||month<1||month>12||day<1||day>days[month-1])throw new Error('記録日が不正です');
+  return value;
+}
+function entryDateText(value){
+  try{const date=normalizeEntryDate(value);return date?date.replace(/-/g,'/'):'—';}catch(e){return '—';}
+}
 function addItem(data){
   seq++;
-  const it = Object.assign({name:"",price:"",qty:"",count:"1",sets:"1",unit:"g"}, data||{}, {id:seq});
+  const it = Object.assign({store:"",name:"",createdAt:data?'':localEntryDate(),price:"",qty:"",count:"1",sets:"1",unit:"g"}, data||{}, {id:seq});
+  if(typeof it.store!=='string')it.store='';
+  if(it.createdAt===undefined)it.createdAt='';
   items.push(it);
   render();
   saveDraft();
@@ -318,9 +359,17 @@ function render(){
     <span class="win-badge">⭐ 最安値</span>
     <h2 class="item-heading" id="heading-${it.id}">${productLabel(i)}</h2>
     <button class="del" onclick="delItem(${it.id})" aria-label="${productLabel(i)}を削除">✕</button>
-    <div class="field"><label for="name-${it.id}">名前・お店<span class="optional">任意</span></label>
-      <input id="name-${it.id}" class="item-name" type="text" placeholder="例：A店の洗剤" value="${esc(it.name)}" aria-describedby="name-help-${it.id}" oninput="upd(${it.id},'name',this.value)">
-      <span class="help" id="name-help-${it.id}">名前は空欄でもOK。</span>
+    <div class="field"><label for="store-${it.id}">店名<span class="optional">任意</span></label>
+      <input id="store-${it.id}" class="item-name" type="text" placeholder="例：近所の薬局、Amazon" value="${esc(it.store)}" aria-describedby="store-help-${it.id}" oninput="upd(${it.id},'store',this.value)">
+      <span class="help" id="store-help-${it.id}">比較のメモ用です。検索には入れません。</span>
+    </div>
+    <div class="field"><label for="name-${it.id}">商品名<span class="optional">検索するときは入力</span></label>
+      <input id="name-${it.id}" class="item-name" type="text" placeholder="例：アタック 詰め替え" value="${esc(it.name)}" aria-describedby="name-help-${it.id}" oninput="upd(${it.id},'name',this.value)">
+      <span class="help" id="name-help-${it.id}">検索にはこの商品名を使います。</span>
+    </div>
+    <div class="field"><label for="createdAt-${it.id}">記録日<span class="optional">変更できます</span></label>
+      <input id="createdAt-${it.id}" type="date" min="0001-01-01" max="9999-12-31" value="${esc(it.createdAt)}" aria-describedby="createdAt-help-${it.id}" onchange="upd(${it.id},'createdAt',this.value)">
+      <span class="help" id="createdAt-help-${it.id}">新しい商品は今日の日付を自動入力。過去の日付にも変更できます。</span>
     </div>
     <div class="field"><label for="price-${it.id}"><span class="step">1</span>値段（円）</label>
       <input id="price-${it.id}" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="例：398" value="${esc(it.price)}" aria-describedby="price-help-${it.id} price-error-${it.id}" oninput="upd(${it.id},'price',this.value)">
@@ -336,6 +385,13 @@ function render(){
         <span class="help" id="unit-help-${it.id}">g・ml・mなど。</span>
       </div>
     </div>
+    <div class="search-buttons" role="group" aria-label="選んだ検索語で外部サイトを検索" aria-describedby="search-help-${it.id}">
+      <button class="small-button market-search google-search" id="google-search-${it.id}" type="button" onclick="searchProduct(${it.id},'google')" aria-label="${productLabel(i)}をGoogleで検索">Google ↗</button>
+      <button class="small-button market-search" id="amazon-search-${it.id}" type="button" onclick="searchProduct(${it.id},'amazon')" aria-label="${productLabel(i)}をAmazonで検索">Amazon ↗</button>
+      <button class="small-button market-search" id="rakuten-search-${it.id}" type="button" onclick="searchProduct(${it.id},'rakuten')" aria-label="${productLabel(i)}を楽天市場で検索">楽天市場 ↗</button>
+      <button class="small-button market-search" id="yahoo-search-${it.id}" type="button" onclick="searchProduct(${it.id},'yahoo')" aria-label="${productLabel(i)}をYahoo!ショッピングで検索">Yahoo!<br>ショッピング ↗</button>
+    </div>
+    <span class="search-help" id="search-help-${it.id}">商品名のみ・商品名＋量を上で選べます。店名は検索に含めません。量が空欄なら商品名のみ。押した検索先に検索語が送られ、別タブが開きます。価格の自動取得はしません。</span>
     <div class="field"><label for="count-${it.id}"><span class="step">3</span>何個入り？</label>
       <input id="count-${it.id}" type="number" min="1" step="1" inputmode="decimal" placeholder="例：5" value="${esc(it.count)}" aria-describedby="count-help-${it.id} count-error-${it.id}" oninput="upd(${it.id},'count',this.value)">
       <span class="help" id="count-help-${it.id}">5箱入りなら「5」。</span><span class="error-message" id="count-error-${it.id}"></span>
@@ -349,10 +405,10 @@ function render(){
       <div class="tool-actions"><button class="small-button copy-product" type="button" onclick="copyProduct(${it.id})">この商品をコピー</button><button class="small-button save-favorite" type="button" onclick="saveFavorite(${it.id})">お気に入り登録</button></div>
       <label for="favorite-${it.id}">お気に入りから入力</label>
       <select class="favorite-picker" id="favorite-${it.id}" onchange="if(this.value!=='')applyFavorite(Number(this.value),${it.id});this.value='';" aria-describedby="favorite-help-${it.id}"></select>
-      <span class="help" id="favorite-help-${it.id}">容量と個数を入力します。値段は空欄に戻ります。</span>
+      <span class="help" id="favorite-help-${it.id}">保存した店名・商品名・記録日・容量・個数・値段を入力します。</span>
     </details>
   </section>`).join("");
-  $("result-list").innerHTML=items.map((it,i)=>`<section class="result-card" id="result-card-${it.id}" aria-labelledby="result-name-${it.id}"><h3 class="result-title" id="result-name-${it.id}">${productLabel(i)}</h3><span class="result-badge">⭐ 最安値</span><div class="unit-price" id="res-${it.id}" aria-live="polite"></div><div class="equal-amount" id="equal-${it.id}"></div></section>`).join("");
+  $("result-list").innerHTML=items.map((it,i)=>`<section class="result-card" id="result-card-${it.id}" aria-labelledby="result-name-${it.id}"><h3 class="result-title" id="result-name-${it.id}">${productLabel(i)}</h3><p class="entry-date" id="result-date-${it.id}"></p><span class="result-badge">⭐ 最安値</span><div class="unit-price" id="res-${it.id}" aria-live="polite"></div><div class="equal-amount" id="equal-${it.id}"></div></section>`).join("");
   items.forEach(updateUnitHints);
   renderFavoritePickers();
   $("items").scrollLeft=oldLeft;
@@ -426,7 +482,8 @@ function renderResults(){
 function syncResultLabels(){
   items.forEach((it,i)=>{
     const title=$("result-name-"+it.id),resultCard=$("result-card-"+it.id);
-    if(title)title.textContent=productLabel(i)+(it.name?"："+it.name:"");
+    if(title)title.textContent=productLabel(i)+(it.name?"："+it.name:"")+(it.store?" ／ 店名："+it.store:"");
+    const date=$("result-date-"+it.id);if(date)date.textContent='記録日：'+entryDateText(it.createdAt);
     if(resultCard)resultCard.classList.toggle("best",$("item-"+it.id).classList.contains("best"));
   });
 }
@@ -479,6 +536,7 @@ function loadDraft(){
   setTax("none");addItem();addItem();loadingDraft=false;
 }
 function saveHistory(){
+  try{items.forEach(it=>normalizeEntryDate(it.createdAt));}catch(e){toast('記録日を確認してください');return;}
   const valid=items.map(it=>getResult(it,true));
   if(!validTax() || valid.some(r=>!r)){toast("赤い案内の項目を確認してください");return;}
   if(valid.length<2){toast("比較する商品を2件以上入力してください");return;}
@@ -528,7 +586,7 @@ function clearAllInputs(){
     localStorage.removeItem("tankakazu_draft");
   }catch(e){storageCleared=false;}
   try{
-    items=items.map(it=>({id:it.id,name:"",price:"",qty:"",count:"1",sets:"1",unit:"g"}));
+    items=items.map(it=>({id:it.id,store:"",name:"",createdAt:localEntryDate(),price:"",qty:"",count:"1",sets:"1",unit:"g"}));
     $("category").value="";
     $("tax-rate").value="10";
     setTax("none");
@@ -544,28 +602,68 @@ function clearSavedHistory(){
   renderHistory();
   toast("保存履歴を削除しました。入力内容はそのままです");
 }
+/* 検索条件は全商品・全4サイトに共通。入力した価格や量自体は変更しない */
+function setSearchMode(mode){
+  searchMode=mode==='quantity'?'quantity':'name';
+  const withQuantity=searchMode==='quantity';
+  $("search-mode-name").classList.toggle('on',!withQuantity);
+  $("search-mode-name").setAttribute('aria-pressed',String(!withQuantity));
+  $("search-mode-quantity").classList.toggle('on',withQuantity);
+  $("search-mode-quantity").setAttribute('aria-pressed',String(withQuantity));
+  $("search-mode-help").textContent=withQuantity?'商品名と1個の量・単位で検索します。店名は含めません。量が空欄なら商品名だけで検索します。4サイト共通です。':'商品名だけで検索します。店名は含めません。4サイト共通です。';
+}
+/* ボタンを押した検索先だけに、選んだ条件の検索語を渡す */
+function searchProduct(id,site='google'){
+  const it=items.find(item=>item.id===id);if(!it)return;
+  const name=String(it.name||'').trim();
+  if(!name){window.alert('商品名を入力してから検索してください。');return;}
+  const volume=searchMode==='quantity'?String(it.qty??'').trim():'';
+  if(volume!==''&&(!Number.isFinite(Number(volume))||Number(volume)<=0)){window.alert('1個の量は0より大きい数字で入力してください。');return;}
+  const unit=it.unit==='kg'?'kg':it.unit==='l'?'L':hasUnit(it.unit)?UNITS[it.unit].base:'';
+  const query=volume?name+' '+volume+unit:name;
+  const encoded=encodeURIComponent(query);
+  const destinations={
+    google:'https://www.google.com/search?q='+encoded,
+    amazon:'https://www.amazon.co.jp/s?k='+encoded,
+    rakuten:'https://search.rakuten.co.jp/search/mall/'+encoded+'/',
+    yahoo:'https://shopping.yahoo.co.jp/search?p='+encoded
+  };
+  if(!Object.prototype.hasOwnProperty.call(destinations,site)){window.alert('検索先が正しくありません。');return;}
+  window.open(destinations[site],'_blank','noopener');
+}
 /* ③ 商品コピー：元の商品には触れず、新しいカードを末尾に追加 */
 function copyProduct(id){
   const source=items.find(it=>it.id===id);if(!source)return;
-  addItem({name:source.name,price:source.price,qty:source.qty,count:source.count,sets:source.sets,unit:source.unit});
+  addItem({store:source.store||'',name:source.name,createdAt:source.createdAt||'',price:source.price,qty:source.qty,count:source.count,sets:source.sets,unit:source.unit});
   toast("コピーしました。値段やお店を変更できます");
 }
-/* ④ お気に入り：名前と容量・入数だけを登録。価格や税込設定は含めない */
+/* ④ お気に入り：価格とその税込・税抜の基準も保存。旧データの価格欠落は空欄として扱う */
 function saveFavorite(id){
   const it=items.find(x=>x.id===id);if(!it)return;
-  if(!it.name.trim()){toast("お気に入り用に名前・お店を入力してください");return;}
+  if(!it.name.trim()){toast("お気に入り用に商品名を入力してください");return;}
   let record;
-  try{record=normalizeFavorite(it);}catch(e){toast("容量・単位・個数・セット数を正しく入力してください");return;}
+  if(it.price!==''&&!validTax()){toast("税率を正しく入力してください");return;}
+  try{record=normalizeFavorite(Object.assign({},it,{taxMode,taxRate:taxMode==='in'?$("tax-rate").value:'10'}));}catch(e){toast("値段・記録日・容量・単位・個数・セット数を正しく入力してください");return;}
   if(favorites.some(f=>JSON.stringify(f)===JSON.stringify(record))){toast("同じ商品が登録済みです");return;}
   const next=[...favorites,record];
   try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));}catch(e){toast("お気に入りを保存できませんでした");return;}
-  favorites=next;renderFavorites();toast("お気に入りに登録しました。値段は保存しません");
+  favorites=next;renderFavorites();toast(record.price!==''?"値段も含めてお気に入りに登録しました":"価格なしでお気に入りに登録しました");
 }
 function applyFavorite(index,id){
   const favorite=favorites[index],it=items.find(x=>x.id===id);if(!favorite||!it)return;
-  if((it.name||it.price||it.qty)&&!window.confirm("この商品の入力をお気に入りの内容に置き換えます。値段は空欄になります。続けますか？"))return;
-  Object.assign(it,{name:favorite.name,price:"",qty:favorite.qty,count:favorite.count,sets:favorite.sets,unit:favorite.unit});
-  render();saveDraft();toast("お気に入りを入力しました。値段を入れてください");
+  let price='',converted=false;
+  if(favorite.price!==''&&favorite.price!==undefined){
+    if(!validTax()){toast("税率を正しく入力してから呼び出してください");return;}
+    const savedFactor=favorite.taxMode==='in'?1+Number(favorite.taxRate)/100:1;
+    const currentFactor=taxMode==='in'?1+Number($("tax-rate").value)/100:1;
+    if(savedFactor===currentFactor){price=String(favorite.price);}
+    else{price=String(Number((Number(favorite.price)*savedFactor/currentFactor).toPrecision(15)));converted=true;}
+    if(!Number.isFinite(Number(price))||Number(price)<=0){toast("保存価格を今の税込・税抜設定に換算できませんでした");return;}
+  }
+  const message=price===''?"この商品の入力をお気に入りの内容に置き換えます。このお気に入りは価格未登録なので、値段は空欄になります。続けますか？":converted?"保存した値段を今の税込・税抜設定に換算し、この商品の入力を置き換えます。他の商品と税設定は変更しません。続けますか？":"保存した値段も含め、この商品の入力をお気に入りの内容に置き換えます。続けますか？";
+  if((it.store||it.name||it.price||it.qty)&&!window.confirm(message))return;
+  Object.assign(it,{store:favorite.store||'',name:favorite.name,createdAt:favorite.createdAt||'',price,qty:favorite.qty,count:favorite.count,sets:favorite.sets,unit:favorite.unit});
+  render();saveDraft();toast(price===''?"価格未登録のお気に入りです。値段を入力してください":converted?"値段を今の税込・税抜設定に換算して入力しました":"保存した値段も入力しました");
 }
 function deleteFavorite(index){
   if(!favorites[index]||!window.confirm("このお気に入りを削除しますか？入力中の商品と比較履歴は消えません。"))return;
@@ -573,12 +671,16 @@ function deleteFavorite(index){
   try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));}catch(e){toast("お気に入りを削除できませんでした");return;}
   favorites=next;renderFavorites();toast("お気に入りを削除しました");
 }
-function favoriteDescription(f){return f.qty+(f.unit==="kg"?"kg":f.unit==="l"?"L":UNITS[f.unit].base)+" × "+f.count+"個 × "+f.sets+"セット";}
+function favoriteDescription(f){
+  const amount=f.qty+(f.unit==="kg"?"kg":f.unit==="l"?"L":UNITS[f.unit].base)+" × "+f.count+"個 × "+f.sets+"セット";
+  const price=f.price!==''&&f.price!==undefined?"保存価格："+(f.taxMode==='in'?'税抜':'税込')+Number(f.price).toLocaleString('ja-JP',{maximumFractionDigits:8})+'円'+(f.taxMode==='in'?'（税率'+f.taxRate+'%）':''):'価格未登録';
+  return amount+' ／ '+price+' ／ 記録日：'+entryDateText(f.createdAt);
+}
 function renderFavoritePickers(){
   document.querySelectorAll('.favorite-picker').forEach(select=>{
     select.replaceChildren();
     const first=document.createElement('option');first.value="";first.textContent=favorites.length?"商品を選ぶ":"お気に入りはまだありません";select.append(first);select.disabled=!favorites.length;
-    favorites.forEach((f,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=f.name+"（"+favoriteDescription(f)+"）";select.append(option);});
+    favorites.forEach((f,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=f.name+(f.store?' ／ '+f.store:'')+"（"+favoriteDescription(f)+"）";select.append(option);});
   });
 }
 function renderFavorites(){
@@ -587,7 +689,7 @@ function renderFavorites(){
   if(!favorites.length){const empty=document.createElement('p');empty.className='help';empty.textContent='まだ登録されていません。';list.append(empty);}
   favorites.forEach((f,index)=>{
     const row=document.createElement('div');row.className='favorite-row';
-    const text=document.createElement('div'),name=document.createElement('strong'),small=document.createElement('small');name.textContent=f.name;small.textContent=favoriteDescription(f);text.append(name,small);
+    const text=document.createElement('div'),name=document.createElement('strong'),small=document.createElement('small');name.textContent=f.name+(f.store?' ／ 店名：'+f.store:'');small.textContent=favoriteDescription(f);text.append(name,small);
     const button=document.createElement('button');button.type='button';button.className='small-button';button.textContent='削除';button.setAttribute('aria-label',f.name+'をお気に入りから削除');button.onclick=()=>deleteFavorite(index);
     row.append(text,button);list.append(row);
   });renderFavoritePickers();
@@ -604,6 +706,8 @@ function renderEqualAmountAndSort(results){
   const groups=new Map();
   results.forEach((r,i)=>{if(r){if(!groups.has(r.base))groups.set(r.base,[]);groups.get(r.base).push({r,i});}});
   items.forEach(it=>$("equal-"+it.id).replaceChildren());
+  const comparableGroups=Array.from(groups.values()).filter(group=>group.length>=2);
+  $("same-amount-status").textContent=comparableGroups.length?'各商品の緑色の欄に、同量の金額と最安との差額を表示しています。':'同じ種類の単位で2商品以上の値段と量を入力すると、差額が表示されます。gとkg、mlとLは比較できます。';
   groups.forEach(group=>{
     if(group.length<2)return;
     const reference=group[0],amount=reference.r.totalQty,min=Math.min(...group.map(x=>x.r.unitPrice));
@@ -611,10 +715,11 @@ function renderEqualAmountAndSort(results){
     group.forEach(({r,i})=>{
       const el=$("equal-"+items[i].id),cost=r.unitPrice*amount,difference=Math.max(0,(r.unitPrice-min)*amount);
       if(!Number.isFinite(cost)||!Number.isFinite(cheapest)||!Number.isFinite(difference)){el.textContent='同量比較の金額が大きすぎます。';return;}
+      const title=document.createElement('strong');title.className='equal-amount-title';title.textContent='同じ量なら、いくら違う？';
       const main=document.createElement('div');main.textContent='同じ'+amount.toLocaleString('ja-JP',{maximumSignificantDigits:12})+r.base+'なら 約'+yen(cost)+'円';
       const diff=document.createElement('div');diff.textContent='最安との差：＋'+yen(difference)+'円';
       const note=document.createElement('small');note.textContent='基準：'+productLabel(reference.i)+'の合計量。端数を含む比例計算の目安です。';
-      el.append(main,diff,note);
+      el.append(title,main,diff,note);
     });
   });
   let order=items.map((it,i)=>i);
@@ -639,14 +744,20 @@ function numericString(value,complete=false,integer=false){
 }
 function normalizeItem(raw,complete=false){
   if(!isRecord(raw)||!hasUnit(raw.unit))throw new Error('商品データが不正です');
-  const normalized={name:textValue(raw.name),price:numericString(raw.price,complete),qty:numericString(raw.qty,complete),count:numericString(raw.count,complete,true),sets:numericString(raw.sets,complete,true),unit:raw.unit};
+  const normalized={store:raw.store===undefined?'':textValue(raw.store),name:textValue(raw.name),createdAt:normalizeEntryDate(raw.createdAt),price:numericString(raw.price,complete),qty:numericString(raw.qty,complete),count:numericString(raw.count,complete,true),sets:numericString(raw.sets,complete,true),unit:raw.unit};
   if(complete){const r=calcUnitPrice(normalized.price,normalized.qty,normalized.count,normalized.sets,normalized.unit,'none',10);if(!r||!Number.isFinite(r.totalQty)||!Number.isFinite(r.unitPrice)||r.unitPrice<=0)throw new Error('計算範囲外の商品です');}
   return normalized;
 }
 function normalizeFavorite(raw){
   if(!isRecord(raw)||!hasUnit(raw.unit))throw new Error('お気に入りが不正です');
-  const f={name:textValue(raw.name),qty:numericString(raw.qty,true),count:numericString(raw.count,true,true),sets:numericString(raw.sets,true,true),unit:raw.unit};
+  const price=raw.price===undefined||raw.price===''?'':numericString(raw.price,true);
+  const mode=raw.taxMode===undefined?'none':raw.taxMode;
+  if(!['none','in'].includes(mode))throw new Error('お気に入りの税込・税抜設定が不正です');
+  const rate=raw.taxRate===undefined?'10':numericString(raw.taxRate);
+  if(rate===''||Number(rate)<0||Number(rate)>100)throw new Error('お気に入りの税率が不正です');
+  const f={store:raw.store===undefined?'':textValue(raw.store),name:textValue(raw.name),createdAt:normalizeEntryDate(raw.createdAt),qty:numericString(raw.qty,true),count:numericString(raw.count,true,true),sets:numericString(raw.sets,true,true),unit:raw.unit,price,taxMode:mode,taxRate:rate};
   if(!f.name.trim()||!Number.isFinite(Number(f.qty)*Number(f.count)*Number(f.sets)*UNITS[f.unit].factor))throw new Error('お気に入りが不正です');
+  if(price!==''&&!Number.isFinite(Number(price)*(mode==='in'?1+Number(rate)/100:1)))throw new Error('お気に入りの価格が大きすぎます');
   return f;
 }
 function normalizeDraft(raw){
@@ -672,7 +783,7 @@ function loadExtraData(){
 }
 function makeBackup(){
   const history=JSON.parse(localStorage.getItem('tankakazu_history')||'[]');
-  const payload={app:'tanka-hikaku',version:1,exportedAt:new Date().toISOString(),draft:{category:$("category").value,taxMode,taxRate:$("tax-rate").value,items:items.map(it=>({name:it.name,price:it.price,qty:it.qty,count:it.count,sets:it.sets,unit:it.unit}))},history,favorites,view:{resultSort}};
+  const payload={app:'tanka-hikaku',version:1,exportedAt:new Date().toISOString(),draft:{category:$("category").value,taxMode,taxRate:$("tax-rate").value,items:items.map(it=>({store:it.store||'',name:it.name,createdAt:it.createdAt||'',price:it.price,qty:it.qty,count:it.count,sets:it.sets,unit:it.unit}))},history,favorites,view:{resultSort}};
   validateBackup(payload);return payload;
 }
 function validateBackup(raw){
@@ -721,5 +832,6 @@ $("tax-rate").addEventListener("input",()=>{renderResults(); saveDraft();});
 $("category").addEventListener("input",saveDraft);
 loadExtraData();loadDraft();renderHistory();renderFavorites();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
