@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="単価比較">
 <title>単価比較ツール</title>
@@ -45,7 +45,7 @@ input:focus,select:focus{outline:none; border-color:var(--c-main); background:#f
 .btn-add{background:#e8f5e9; color:var(--c-main-d); border:2px dashed var(--c-main); margin-bottom:10px;}
 .btn-save{background:var(--c-main); color:#fff; box-shadow:0 2px 6px rgba(15,157,88,.35);}
 .tax-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-.tax-row .rate{width:90px;}
+.rate{width:90px;}
 .chip{padding:8px 14px; border-radius:20px; border:1.5px solid var(--c-line); background:#fff; font-size:.85rem; cursor:pointer;}
 .chip.on{background:var(--c-main); color:#fff; border-color:var(--c-main);}
 /* history */
@@ -56,30 +56,122 @@ input:focus,select:focus{outline:none; border-color:var(--c-main); background:#f
 footer{text-align:center; font-size:.7rem; color:#aaa; padding:10px;}
 .toast{position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:24px; font-size:.85rem; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
 .toast.show{opacity:1;}
+/* 入力案内：説明は入力後も消さない */
+body{line-height:1.65;}
+header .sub{font-size:13px;}
+label{font-size:16px;font-weight:700;color:#23352e;margin-bottom:6px;}
+input,select{min-width:0;min-height:48px;font-size:17px;}
+.item{padding:18px 14px;margin-bottom:20px;}
+.item-heading{font-size:18px;margin:0 40px 12px 0;}
+.item-name{border:1.5px solid var(--c-line);padding:12px 8px;border-radius:10px;margin-bottom:0;font-weight:400;}
+.field{margin-bottom:18px;}
+.help{display:block;font-size:14px;color:#56665e;margin-top:5px;line-height:1.65;}
+.optional{font-size:12px;font-weight:400;color:#607065;margin-left:5px;}
+.step{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;background:#e5f4ec;color:#096d3d;border-radius:50%;font-size:14px;margin-right:6px;}
+.guide{background:#eef8f2;border:1px solid #cde5d7;}
+.guide ol{padding-left:24px;font-size:15px;}
+.guide li+li{margin-top:6px;}
+.examples{margin-top:14px;border-top:1px solid #cde5d7;padding-top:10px;font-size:15px;}
+.examples summary{cursor:pointer;font-weight:700;padding:5px 0;}
+.example{padding:10px 0;border-bottom:1px solid #d8e6de;}
+.example:last-child{border-bottom:0;}
+.example b{display:block;color:#19563a;}
+.example p{margin-top:4px;}
+.notice{background:#fff7e5;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px;color:#71501c;}
+.tax-row{margin-top:8px;}
+.chip{min-height:44px;font-size:16px;}
+.tax-rate-label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.tax-rate-label label{margin:0;}
+.error-message{display:block;font-size:14px;color:#ac2626;margin-top:5px;}
+.invalid{border-color:#cc4141!important;background:#fff6f6!important;}
+.quantity-preview{padding:10px 12px;background:#f0f5f2;border-radius:10px;font-size:14px;color:#244e38;overflow-wrap:anywhere;}
+.unit-price{border-top:1px solid #dfe6e1;padding-top:12px;font-size:16px;overflow-wrap:anywhere;}
+.unit-price small{display:block;font-size:14px;color:#56665e;margin-top:4px;}
+.diff{font-size:14px;}
+.win-badge{font-size:13px;}
+.item.best .win-badge{top:-13px;}
+.item .del{width:36px;height:36px;}
+.hist-item{font-size:16px;gap:8px;}
+.hist-item small{font-size:13px;}
+.hist-del{min-width:44px;min-height:44px;}
+.toast{max-width:92vw;width:max-content;white-space:normal;bottom:30px;}
+footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
+.grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+@media(max-width:350px){.grid2{grid-template-columns:1fr;}}
+/* 商品ごとに左右へスワイプ。ページ自体は横にはみ出さない。 */
+#items{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding:16px 0 12px;scroll-padding-inline:0;scrollbar-width:thin;}
+#items .item{flex:0 0 min(85vw,540px);width:min(85vw,540px);min-width:0;margin-bottom:0;scroll-snap-align:start;scroll-snap-stop:always;align-self:flex-start;}
+.swipe-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.swipe-hint{font-size:14px;color:#345e49;}
+.swipe-button{min-width:44px;min-height:44px;border:1px solid #ccded3;background:#fff;border-radius:10px;font-size:20px;color:#19663d;cursor:pointer;}
+.swipe-button:disabled{opacity:.35;cursor:default;}
+#product-position{font-size:13px;color:#52675b;text-align:center;margin:2px 0 12px;}
+#comparison-results{margin-top:16px;}
+.result-card{border:1px solid #dfe6e1;border-radius:10px;padding:12px;margin-top:10px;}
+.result-card.best{background:var(--c-best);border-color:var(--c-best-b);}
+.result-title{font-size:16px;overflow-wrap:anywhere;}
+.result-card .unit-price{border:0;padding-top:0;margin-top:8px;}
+.result-badge{display:none;font-size:13px;color:#8b4b00;}
+.result-card.best .result-badge{display:block;}
+#items .field{margin-bottom:14px;}
+#items .help{font-size:13px;margin-top:4px;}
+#items .item-heading{margin-bottom:12px;}
+#items .quantity-preview{font-size:13px;}
+@media(min-width:351px){#items .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}}
+@media(prefers-reduced-motion:reduce){#items{scroll-behavior:auto;}}
 </style>
 </head>
 <body>
 <header>
   <h1>🛒 単価比較ツール</h1>
-  <div class="sub">どっちがお得？ 一瞬で判定 — 完全ローカル動作・無料</div>
+  <div class="sub">値段と量を入れるだけ。どっちがお得？</div>
 </header>
 <main>
 
-<div class="card">
-  <h2>📦 比較カテゴリ <span class="badge">例：ティッシュ</span></h2>
-  <div class="cat-row"><input id="category" type="text" placeholder="カテゴリ名（例：ティッシュ、トイレットペーパー）"></div>
-  <div style="margin-top:10px" class="tax-row">
-    <span style="font-size:.85rem">税：</span>
-    <button class="chip on" id="tax-none" onclick="setTax('none')">税込のまま</button>
-    <button class="chip" id="tax-in" onclick="setTax('in')">税抜→込(+10%)</button>
-    <input class="rate" id="tax-rate" type="number" value="10" min="0" max="100" inputmode="decimal" title="税率%">
-    <span style="font-size:.8rem;color:var(--c-sub)">%</span>
+<section class="card guide" aria-labelledby="guide-title">
+  <h2 id="guide-title">使い方</h2>
+  <ol><li>商品Aの値段と量を入れます。</li><li>横にスワイプして、商品Bも入れます。</li><li>下の<strong>「くらべた結果」</strong>で、安い方を見ます。</li></ol>
+  <details class="examples"><summary>入力例を見る（洗剤・ティッシュ・トイレ紙）</summary>
+    <div class="example"><b>洗剤：800mlの詰め替え1袋が398円</b><p>値段＝398円 ／ 1個分の量＝800 ／ 単位＝ml ／ 入っている個数＝1 ／ セット数＝1</p></div>
+    <div class="example"><b>ティッシュ：200組の箱が5箱、まとめて398円</b><p>値段＝398円 ／ 1個分の量＝200 ／ 単位＝組 ／ 入っている個数＝5 ／ セット数＝1</p><p>「200組（400枚）」は、組なら200、枚なら400。2つの商品で同じ数え方にそろえてください。</p></div>
+    <div class="example"><b>通販：800ml×3袋のセットを2セット、合計2,000円</b><p>値段＝2000円 ／ 1個分の量＝800 ／ 単位＝ml ／ 入っている個数＝3 ／ セット数＝2</p><p>3袋を2セットで合計6袋。「個数＝6・セット数＝1」でも同じ計算になります。</p></div>
+    <div class="example"><b>トイレットペーパー：1ロール30m、12ロールで598円</b><p>値段＝598円 ／ 1個分の量＝30 ／ 単位＝m ／ 入っている個数＝12 ／ セット数＝1</p><p>長さで比較したいときは「m」を選びます。シングル・ダブルなど品質の違いは別に判断してください。</p></div>
+  </details>
+</section>
+<section class="card" aria-labelledby="settings-title">
+  <h2 id="settings-title">比較の準備</h2>
+  <label for="category">何をくらべる？<span class="optional">任意</span></label>
+  <input id="category" type="text" placeholder="例：洗濯洗剤、ティッシュ" aria-describedby="category-help">
+  <span class="help" id="category-help">例：洗剤。入れなくても使えます。</span>
+  <div style="margin-top:18px"><label>値札はどちら？</label>
+    <div class="tax-row" role="group" aria-label="入力価格の税込・税抜を選択">
+      <button class="chip on" id="tax-none" onclick="setTax('none')" aria-pressed="true">税込の値段</button>
+      <button class="chip" id="tax-in" onclick="setTax('in')" aria-pressed="false">税抜の値段</button>
+    </div>
+    <span class="help">全部の商品を、税込か税抜のどちらかにそろえます。</span>
+    <div class="tax-rate-label" id="tax-rate-wrap" hidden>
+      <label for="tax-rate">消費税率（%）</label>
+      <input class="rate" id="tax-rate" type="number" value="10" min="0" max="100" step="any" inputmode="decimal" aria-describedby="tax-help tax-error">
+    </div>
+    <span class="help" id="tax-help">税込の値段には、税金を足しません。</span>
+    <span class="error-message" id="tax-error"></span>
   </div>
-</div>
+</section>
 
-<div id="items"></div>
+<div class="swipe-toolbar">
+  <button class="swipe-button" id="previous-product" onclick="moveProduct(-1)" aria-label="前の商品へ" aria-controls="items">‹</button>
+  <span class="swipe-hint" id="swipe-help">← 横にスワイプ →</span>
+  <button class="swipe-button" id="next-product" onclick="moveProduct(1)" aria-label="次の商品へ" aria-controls="items">›</button>
+</div>
+<div id="items" tabindex="0" role="region" aria-label="商品の入力。左右にスクロールできます" aria-describedby="swipe-help product-position"></div>
+<div id="product-position" aria-live="polite"></div>
 
 <button class="btn btn-add" onclick="addItem()">＋ 商品を追加</button>
+<section class="card" id="comparison-results" aria-labelledby="results-title">
+  <h2 id="results-title">くらべた結果</h2>
+  <span class="help">同じ量あたりの値段をくらべます。</span>
+  <div id="result-list"></div>
+</section>
 <button class="btn btn-save" onclick="saveHistory()">💾 この比較を保存</button>
 
 <div class="card" style="margin-top:14px">
@@ -88,7 +180,7 @@ footer{text-align:center; font-size:.7rem; color:#aaa; padding:10px;}
 </div>
 
 </main>
-<footer>データはこの端末内にのみ保存されます（外部送信なし）</footer>
+<footer>入力した比較データは、この端末・ブラウザ内に保存します。2人で使っても自動共有はされません。ブラウザのデータ削除などで消える場合があります。</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -100,6 +192,7 @@ const UNITS = {
   l:  {label:"L（リットル）",    base:"ml", factor:1000},
   ko: {label:"個",  base:"個",  factor:1},
   mai:{label:"枚",  base:"枚",  factor:1},
+  kumi:{label:"組（ティッシュなど）", base:"組", factor:1},
   hon:{label:"本",  base:"本",  factor:1},
   pkn:{label:"パック", base:"パック", factor:1},
   rol:{label:"ロール", base:"ロール", factor:1},
@@ -141,45 +234,85 @@ function setTax(mode){
   taxMode=mode;
   $("tax-none").classList.toggle("on",mode==="none");
   $("tax-in").classList.toggle("on",mode==="in");
+  $("tax-none").setAttribute("aria-pressed",String(mode==="none"));
+  $("tax-in").setAttribute("aria-pressed",String(mode==="in"));
+  $("tax-rate-wrap").hidden=mode!=="in";
+  $("tax-rate-wrap").style.display=mode==="in"?"flex":"none";
+  $("tax-help").textContent=mode==="in"?"税率はふつう10、軽減税率なら8です。":"税込の値段には、税金を足しません。";
   render();
+  saveDraft();
 }
 function addItem(data){
   seq++;
-  const it = Object.assign({id:seq,name:"",price:"",qty:"",count:"",sets:"",unit:"g"}, data||{});
+  const it = Object.assign({name:"",price:"",qty:"",count:"1",sets:"1",unit:"g"}, data||{}, {id:seq});
   items.push(it);
   render();
+  saveDraft();
+  if(!loadingDraft)requestAnimationFrame(()=>scrollToProduct(items.length-1));
 }
 function delItem(id){
   items = items.filter(x=>x.id!==id);
   if(items.length===0) addItem();
   else render();
+  saveDraft();
 }
 function upd(id,key,val){
   const it=items.find(x=>x.id===id); if(it){it[key]=val;}
+  if(key==="unit" && it) updateUnitHints(it);
   renderResults();
   saveDraft();
 }
 function unitOpts(sel){
   return Object.entries(UNITS).map(([k,u])=>`<option value="${k}" ${k===sel?"selected":""}>${u.label}</option>`).join("");
 }
+function productLabel(index){return "商品"+(index<26?String.fromCharCode(65+index):index+1);}
 function render(){
-  $("items").innerHTML = items.map(it=>`
-  <div class="item" id="item-${it.id}">
+  const oldLeft=$("items").scrollLeft;
+  $("items").innerHTML = items.map((it,i)=>`
+  <section class="item" id="item-${it.id}" aria-labelledby="heading-${it.id}">
     <span class="win-badge">⭐ 最安値</span>
-    <button class="del" onclick="delItem(${it.id})" aria-label="削除">✕</button>
-    <input class="item-name" type="text" placeholder="商品名（例：○○ ティッシュ）" value="${esc(it.name)}" oninput="upd(${it.id},'name',this.value)">
-    <div class="grid2" style="margin-bottom:8px">
-      <div><label>価格（円）</label><input type="number" inputmode="decimal" placeholder="2980" value="${esc(it.price)}" oninput="upd(${it.id},'price',this.value)"></div>
-      <div><label>1つあたりの量</label><input type="number" inputmode="decimal" placeholder="320" value="${esc(it.qty)}" oninput="upd(${it.id},'qty',this.value)"></div>
+    <h2 class="item-heading" id="heading-${it.id}">${productLabel(i)}</h2>
+    <button class="del" onclick="delItem(${it.id})" aria-label="${productLabel(i)}を削除">✕</button>
+    <div class="field"><label for="name-${it.id}">名前・お店<span class="optional">任意</span></label>
+      <input id="name-${it.id}" class="item-name" type="text" placeholder="例：A店の洗剤" value="${esc(it.name)}" aria-describedby="name-help-${it.id}" oninput="upd(${it.id},'name',this.value)">
+      <span class="help" id="name-help-${it.id}">名前は空欄でもOK。</span>
     </div>
-    <div class="grid3">
-      <div><label>入数（個数）</label><input type="number" inputmode="numeric" placeholder="24" value="${esc(it.count)}" oninput="upd(${it.id},'count',this.value)"></div>
-      <div><label>セット数</label><input type="number" inputmode="numeric" placeholder="1" value="${esc(it.sets)}" oninput="upd(${it.id},'sets',this.value)"></div>
-      <div><label>単位</label><select onchange="upd(${it.id},'unit',this.value)">${unitOpts(it.unit)}</select></div>
+    <div class="field"><label for="price-${it.id}"><span class="step">1</span>値段（円）</label>
+      <input id="price-${it.id}" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="例：398" value="${esc(it.price)}" aria-describedby="price-help-${it.id} price-error-${it.id}" oninput="upd(${it.id},'price',this.value)">
+      <span class="help" id="price-help-${it.id}">5箱で398円なら「398」。</span><span class="error-message" id="price-error-${it.id}"></span>
     </div>
-    <div class="unit-price" id="res-${it.id}"></div>
-  </div>`).join("");
+    <div class="grid2">
+      <div class="field"><label for="qty-${it.id}"><span class="step">2</span>1個の量<span id="qty-unit-${it.id}"></span></label>
+        <input id="qty-${it.id}" type="number" min="0.000001" step="any" inputmode="decimal" placeholder="例：800" value="${esc(it.qty)}" aria-describedby="qty-help-${it.id} qty-error-${it.id}" oninput="upd(${it.id},'qty',this.value)">
+        <span class="help" id="qty-help-${it.id}"></span><span class="error-message" id="qty-error-${it.id}"></span>
+      </div>
+      <div class="field"><label for="unit-${it.id}">単位</label>
+        <select id="unit-${it.id}" aria-describedby="unit-help-${it.id}" onchange="upd(${it.id},'unit',this.value)">${unitOpts(it.unit)}</select>
+        <span class="help" id="unit-help-${it.id}">g・ml・mなど。</span>
+      </div>
+    </div>
+    <div class="field"><label for="count-${it.id}"><span class="step">3</span>何個入り？</label>
+      <input id="count-${it.id}" type="number" min="1" step="1" inputmode="decimal" placeholder="例：5" value="${esc(it.count)}" aria-describedby="count-help-${it.id} count-error-${it.id}" oninput="upd(${it.id},'count',this.value)">
+      <span class="help" id="count-help-${it.id}">5箱入りなら「5」。</span><span class="error-message" id="count-error-${it.id}"></span>
+    </div>
+    <div class="field"><label for="sets-${it.id}"><span class="step">4</span>何セット？</label>
+      <input id="sets-${it.id}" type="number" min="1" step="1" inputmode="decimal" placeholder="例：1" value="${esc(it.sets)}" aria-describedby="sets-help-${it.id} sets-error-${it.id}" oninput="upd(${it.id},'sets',this.value)">
+      <span class="help" id="sets-help-${it.id}">ふつうは1。値段は全部の分。</span><span class="error-message" id="sets-error-${it.id}"></span>
+    </div>
+    <div class="quantity-preview" id="total-${it.id}"></div>
+  </section>`).join("");
+  $("result-list").innerHTML=items.map((it,i)=>`<section class="result-card" id="result-card-${it.id}" aria-labelledby="result-name-${it.id}"><h3 class="result-title" id="result-name-${it.id}">${productLabel(i)}</h3><span class="result-badge">⭐ 最安値</span><div class="unit-price" id="res-${it.id}" aria-live="polite"></div></section>`).join("");
+  items.forEach(updateUnitHints);
+  $("items").scrollLeft=oldLeft;
   renderResults();
+  updateProductPosition();
+}
+function updateUnitHints(it){
+  const hints={g:["g","例：500","500gなら500。"],kg:["kg","例：1.5","1.5kgなら1.5。"],ml:["ml","例：800","800mlなら800。"],l:["L","例：2","2Lなら2。"],mai:["枚","例：400","400枚なら400。"],kumi:["組","例：200","200組なら200。"],m:["m","例：30","30mなら30。"],ko:["個","例：1","1個なら1。"],hon:["本","例：1","1本なら1。"],pkn:["パック","例：1","1パックなら1。"],rol:["ロール","例：1","1ロールなら1。"],mai_set:["食","例：1","1食なら1。"]};
+  const h=hints[it.unit]||hints.g;
+  $("qty-unit-"+it.id).textContent="（"+h[0]+"）";
+  $("qty-help-"+it.id).textContent=h[2];
+  $("qty-"+it.id).placeholder=h[1];
 }
 function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
 function fmt(n){
@@ -188,49 +321,121 @@ function fmt(n){
   return n.toFixed(3);
 }
 function unitSuffix(k){return UNITS[k]?UNITS[k].base:"";}
+function validTax(){return taxMode!=="in" || ($("tax-rate").value!=="" && $("tax-rate").validity.valid && Number($("tax-rate").value)>=0 && Number($("tax-rate").value)<=100);}
+function validateItem(it,force=false){
+  const started=force || it.price!=="" || it.qty!=="";
+  let ok=true;
+  const names={price:"値段",qty:"1個分の量",count:"入っている個数",sets:"セット数"};
+  Object.keys(names).forEach(key=>{
+    const input=$(key+"-"+it.id); if(!input){ok=false;return;}
+    const n=Number(it[key]);
+    const integer=key==="count"||key==="sets";
+    const valid=it[key]!=="" && Number.isFinite(n) && n>0 && (!integer||Number.isInteger(n)) && input.validity.valid;
+    if(!valid) ok=false;
+    const show=!valid&&(started||input.validity.badInput);
+    input.classList.toggle("invalid",show);
+    input.setAttribute("aria-invalid",String(show));
+    $(key+"-error-"+it.id).textContent=show?(it[key]===""&&!input.validity.badInput?names[key]+"を入力してください。":integer?"1以上の整数を入力してください。":"0より大きい数を入力してください。"):"";
+  });
+  return ok;
+}
+function getResult(it,force=false){
+  if(!validateItem(it,force)||!validTax()) return null;
+  const r=calcUnitPrice(it.price,it.qty,it.count,it.sets,it.unit,taxMode,$("tax-rate").value);
+  return r&&Number.isFinite(r.unitPrice)&&r.unitPrice>0&&Number.isFinite(r.totalQty)&&Number.isFinite(r.total)?r:null;
+}
 function renderResults(){
-  const taxRate = $("tax-rate").value;
-  const results = items.map(it=>calcUnitPrice(it.price,it.qty,it.count,it.sets,it.unit,taxMode,taxRate));
-  const {winners} = compare(results);
+  const taxOK=validTax();
+  $("tax-rate").classList.toggle("invalid",!taxOK);
+  $("tax-rate").setAttribute("aria-invalid",String(!taxOK));
+  $("tax-error").textContent=taxOK?"":"税率は0〜100の数値で入力してください。";
+  const results=items.map(it=>getResult(it));
   items.forEach((it,i)=>{
     const el=$("res-"+it.id); if(!el) return;
-    const card=$("item-"+it.id);
-    const r=results[i];
-    if(!r){ el.innerHTML=`<span style="color:#bbb;font-size:.8rem">価格・量・入数を入力すると自動計算されます</span>`; card.classList.remove("best"); return;}
-    const isWin = winners.includes(r) && items.length>1;
+    const card=$("item-"+it.id), r=results[i];
+    card.classList.remove("best");
+    const preview=$("total-"+it.id);
+    const q=Number(it.qty),c=Number(it.count),s=Number(it.sets);
+    preview.textContent=q>0&&c>0&&s>0&&Number.isFinite(q*c*s)?"量の確認："+it.qty+" "+(it.unit==="l"?"L":unitSuffix(it.unit)==="g"&&it.unit==="kg"?"kg":unitSuffix(it.unit))+" × "+it.count+"個 × "+it.sets+"セット ＝ 合計 "+(q*c*s).toLocaleString("ja-JP")+" "+(it.unit==="l"?"L":it.unit==="kg"?"kg":unitSuffix(it.unit)):"量の確認：1個分の量 × 入っている個数 × セット数";
+    if(!r){el.innerHTML='<span class="help">'+(!taxOK?"税率を確認してください。":"値段と量を入力してください。赤い案内が出た場合は、その項目を確認してください。")+'</span>';return;}
+    const peers=results.filter(x=>x&&x.base===r.base);
+    const {winners,best}=compare(peers);
+    const comparable=peers.length>=2;
+    const isWin=comparable&&winners.includes(r);
     card.classList.toggle("best",isWin);
     let diff="";
-    if(!isWin && winners.length){
-      const d=(r.unitPrice-winners[0].unitPrice)/winners[0].unitPrice*100;
-      diff=`<div class="diff">最安より +${d.toFixed(1)}% 高い</div>`;
-    }
-    el.innerHTML=`1${unitSuffix(it.unit)}あたり <b>¥${fmt(r.unitPrice)}</b>　<small style="color:#888">（総量 ${fmt(r.totalQty)}${unitSuffix(it.unit)} ／ 合計 ¥${Math.round(r.total).toLocaleString()}）</small>${diff}`;
+    if(comparable&&!isWin){const d=(r.unitPrice-best)/best*100;diff='<div class="diff">同じ単位の最安より '+d.toFixed(1)+'% 高い</div>';}
+    const wait=!comparable?'<div class="help">比較相手の値段と量を入力すると、お得な方が分かります。単位は同じ種類にそろえてください（gとkg、mlとLは比較できます）。</div>':(winners.length>1&&isWin?'<div class="help">同じ単位の商品で同率の最安です。</div>':"");
+    el.innerHTML='1'+r.base+'あたり <b>¥'+fmt(r.unitPrice)+'</b><small>合計量：'+r.totalQty.toLocaleString("ja-JP")+r.base+' ／ 税込合計：¥'+r.total.toLocaleString("ja-JP",{maximumFractionDigits:2})+'</small>'+diff+wait;
+  });
+  syncResultLabels();
+}
+function syncResultLabels(){
+  items.forEach((it,i)=>{
+    const title=$("result-name-"+it.id),resultCard=$("result-card-"+it.id);
+    if(title)title.textContent=productLabel(i)+(it.name?"："+it.name:"");
+    if(resultCard)resultCard.classList.toggle("best",$("item-"+it.id).classList.contains("best"));
   });
 }
+function nearestProduct(){
+  const row=$("items"),cards=Array.from(row.children);
+  if(!cards.length)return 0;
+  const left=row.getBoundingClientRect().left;
+  let best=0,distance=Infinity;
+  cards.forEach((card,i)=>{const d=Math.abs(card.getBoundingClientRect().left-left);if(d<distance){best=i;distance=d;}});
+  return best;
+}
+function scrollToProduct(index){
+  const row=$("items"),card=row.children[Math.max(0,Math.min(index,items.length-1))];
+  if(!card)return;
+  const left=row.scrollLeft+card.getBoundingClientRect().left-row.getBoundingClientRect().left;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  row.scrollTo({left,behavior:reduced?'auto':'smooth'});
+}
+function moveProduct(direction){scrollToProduct(nearestProduct()+direction);}
+function updateProductPosition(){
+  const i=nearestProduct();
+  $("product-position").textContent=items.length?productLabel(i)+" ／ 全"+items.length+"商品":"";
+  $("previous-product").disabled=i===0;
+  $("next-product").disabled=i>=items.length-1;
+}
+$("items").addEventListener("scroll",updateProductPosition,{passive:true});
+$("items").addEventListener("keydown",event=>{
+  if(event.target!==$("items"))return;
+  if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();moveProduct(event.key==='ArrowRight'?1:-1);}
+});
+window.addEventListener("resize",updateProductPosition);
 
 /* ---- 保存（localStorage） ---- */
+let loadingDraft=false;
 function saveDraft(){
-  try{ localStorage.setItem("tankakazu_draft", JSON.stringify({items, taxMode, category:$("category").value})); }catch(e){}
+  if(loadingDraft) return;
+  try{ localStorage.setItem("tankakazu_draft", JSON.stringify({items, taxMode, taxRate:$("tax-rate").value, category:$("category").value})); }catch(e){}
 }
 function loadDraft(){
+  loadingDraft=true;
   try{
     const d=JSON.parse(localStorage.getItem("tankakazu_draft")||"null");
-    if(d&&d.items&&d.items.length){ items=[]; taxMode=d.taxMode||"none"; setTax(taxMode);
+    if(d&&Array.isArray(d.items)&&d.items.length){items=[];seq=0;
       $("category").value=d.category||"";
-      d.items.forEach(x=>addItem(x)); return;
+      $("tax-rate").value=d.taxRate??10;
+      setTax(d.taxMode==="in"?"in":"none");
+      d.items.forEach(x=>addItem(x));loadingDraft=false;return;
     }
   }catch(e){}
-  addItem(); addItem();
+  setTax("none");addItem();addItem();loadingDraft=false;
 }
 function saveHistory(){
-  const valid = items.filter(it=>calcUnitPrice(it.price,it.qty,it.count,it.sets,it.unit,taxMode,$("tax-rate").value));
-  if(valid.length<2){ toast("比較できる商品を2件以上入力してください"); return; }
+  const valid=items.map(it=>getResult(it,true));
+  if(!validTax() || valid.some(r=>!r)){toast("赤い案内の項目を確認してください");return;}
+  if(valid.length<2){toast("比較する商品を2件以上入力してください");return;}
+  if(new Set(valid.map(r=>r.base)).size!==1){toast("保存する比較は単位を同じ種類にそろえてください");return;}
   let list=[];
   try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
-  list.unshift({date:new Date().toLocaleString("ja-JP"), category:$("category").value||"（カテゴリなし）", taxMode, items:JSON.parse(JSON.stringify(items))});
+  list.unshift({date:new Date().toLocaleString("ja-JP"), category:$("category").value||"（カテゴリなし）", taxMode, taxRate:$("tax-rate").value, items:JSON.parse(JSON.stringify(items))});
   if(list.length>30) list=list.slice(0,30);
-  try{ localStorage.setItem("tankakazu_history", JSON.stringify(list)); }catch(e){}
-  renderHistory(); toast("保存しました ✅");
+  try{ localStorage.setItem("tankakazu_history", JSON.stringify(list)); }catch(e){toast("保存できませんでした。ブラウザの保存設定を確認してください");return;}
+  saveDraft();renderHistory();toast("保存しました ✅");
 }
 function renderHistory(){
   let list=[];
@@ -244,15 +449,19 @@ function renderHistory(){
 function restore(i){
   let list=[]; try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
   const h=list[i]; if(!h) return;
+  loadingDraft=true;
   items=[]; seq=0; $("category").value=h.category==="（カテゴリなし）"?"":h.category;
+  $("tax-rate").value=h.taxRate??10;
   setTax(h.taxMode||"none");
   h.items.forEach(x=>addItem(x));
+  loadingDraft=false;saveDraft();
   window.scrollTo({top:0,behavior:"smooth"});
   toast("読み込みました");
 }
 function delHist(i){
   let list=[]; try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
-  list.splice(i,1); localStorage.setItem("tankakazu_history",JSON.stringify(list));
+  list.splice(i,1);
+  try{localStorage.setItem("tankakazu_history",JSON.stringify(list));}catch(e){toast("削除を保存できませんでした");return;}
   renderHistory();
 }
 function toast(msg){
@@ -263,6 +472,5 @@ $("tax-rate").addEventListener("input",()=>{renderResults(); saveDraft();});
 $("category").addEventListener("input",saveDraft);
 loadDraft(); renderHistory();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
