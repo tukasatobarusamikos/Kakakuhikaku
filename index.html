@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="単価比較">
+<title>単価比較ツール</title>
+<style>
+:root{
+  --c-main:#0f9d58; --c-main-d:#0b7c44; --c-bg:#f4f6f8; --c-card:#ffffff;
+  --c-text:#222; --c-sub:#777; --c-best:#fff3e0; --c-best-b:#ff9800;
+  --c-danger:#e53935; --c-line:#e3e7ea;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif; background:var(--c-bg); color:var(--c-text); font-size:16px; padding-bottom:90px;}
+header{background:linear-gradient(135deg,var(--c-main),#12b76a); color:#fff; padding:16px; text-align:center; position:sticky; top:0; z-index:10; box-shadow:0 2px 6px rgba(0,0,0,.15);}
+header h1{font-size:1.15rem; font-weight:700;}
+header .sub{font-size:.72rem; opacity:.85; margin-top:2px;}
+main{max-width:640px; margin:0 auto; padding:12px;}
+.card{background:var(--c-card); border-radius:14px; padding:14px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card h2{font-size:.95rem; margin-bottom:10px; display:flex; align-items:center; gap:6px;}
+.badge{background:var(--c-main); color:#fff; font-size:.65rem; padding:2px 8px; border-radius:10px;}
+/* category */
+.cat-row{display:flex; gap:8px; align-items:center;}
+.cat-row input{flex:1;}
+/* item card */
+.item{border:1.5px solid var(--c-line); border-radius:12px; padding:12px; margin-bottom:10px; position:relative; background:#fff;}
+.item.best{border-color:var(--c-best-b); background:var(--c-best);}
+.item .del{position:absolute; top:8px; right:8px; background:#ffebee; color:var(--c-danger); border:none; width:30px; height:30px; border-radius:50%; font-size:1rem; font-weight:bold; cursor:pointer;}
+.item-name{width:100%; font-weight:600; border:none; border-bottom:1.5px dashed var(--c-line); padding:4px 2px; font-size:1rem; margin-bottom:8px; background:transparent;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+label{display:block; font-size:.7rem; color:var(--c-sub); margin-bottom:3px;}
+input,select{width:100%; padding:12px 8px; border:1.5px solid var(--c-line); border-radius:10px; font-size:1.05rem; background:#fafbfc;}
+input:focus,select:focus{outline:none; border-color:var(--c-main); background:#fff;}
+.unit-price{margin-top:10px; text-align:center; font-size:.95rem;}
+.unit-price b{font-size:1.3rem; color:var(--c-main-d);}
+.item.best .unit-price b{color:#c66a00;}
+.win-badge{display:none; position:absolute; top:-10px; left:10px; background:var(--c-best-b); color:#fff; font-size:.68rem; font-weight:bold; padding:3px 10px; border-radius:10px;}
+.item.best .win-badge{display:inline-block;}
+.diff{font-size:.75rem; color:var(--c-danger); margin-top:2px;}
+/* buttons */
+.btn{display:block; width:100%; padding:14px; border:none; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer;}
+.btn-add{background:#e8f5e9; color:var(--c-main-d); border:2px dashed var(--c-main); margin-bottom:10px;}
+.btn-save{background:var(--c-main); color:#fff; box-shadow:0 2px 6px rgba(15,157,88,.35);}
+.tax-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+.tax-row .rate{width:90px;}
+.chip{padding:8px 14px; border-radius:20px; border:1.5px solid var(--c-line); background:#fff; font-size:.85rem; cursor:pointer;}
+.chip.on{background:var(--c-main); color:#fff; border-color:var(--c-main);}
+/* history */
+.hist-item{display:flex; justify-content:space-between; align-items:center; padding:10px 4px; border-bottom:1px solid var(--c-line); font-size:.9rem; cursor:pointer;}
+.hist-item small{color:var(--c-sub); display:block; font-size:.72rem;}
+.hist-del{background:none; border:none; color:#bbb; font-size:1.1rem; padding:4px 8px;}
+.empty{text-align:center; color:#aaa; font-size:.85rem; padding:14px 0;}
+footer{text-align:center; font-size:.7rem; color:#aaa; padding:10px;}
+.toast{position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:#333; color:#fff; padding:10px 20px; border-radius:24px; font-size:.85rem; opacity:0; transition:.3s; pointer-events:none; z-index:99;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛒 単価比較ツール</h1>
+  <div class="sub">どっちがお得？ 一瞬で判定 — 完全ローカル動作・無料</div>
+</header>
+<main>
+
+<div class="card">
+  <h2>📦 比較カテゴリ <span class="badge">例：ティッシュ</span></h2>
+  <div class="cat-row"><input id="category" type="text" placeholder="カテゴリ名（例：ティッシュ、トイレットペーパー）"></div>
+  <div style="margin-top:10px" class="tax-row">
+    <span style="font-size:.85rem">税：</span>
+    <button class="chip on" id="tax-none" onclick="setTax('none')">税込のまま</button>
+    <button class="chip" id="tax-in" onclick="setTax('in')">税抜→込(+10%)</button>
+    <input class="rate" id="tax-rate" type="number" value="10" min="0" max="100" inputmode="decimal" title="税率%">
+    <span style="font-size:.8rem;color:var(--c-sub)">%</span>
+  </div>
+</div>
+
+<div id="items"></div>
+
+<button class="btn btn-add" onclick="addItem()">＋ 商品を追加</button>
+<button class="btn btn-save" onclick="saveHistory()">💾 この比較を保存</button>
+
+<div class="card" style="margin-top:14px">
+  <h2>🕘 保存した比較</h2>
+  <div id="history"></div>
+</div>
+
+</main>
+<footer>データはこの端末内にのみ保存されます（外部送信なし）</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/*CALC_START*/
+const UNITS = {
+  g:  {label:"g（グラム）",      base:"g",  factor:1},
+  kg: {label:"kg（キログラム）", base:"g",  factor:1000},
+  ml: {label:"ml（ミリリットル）",base:"ml", factor:1},
+  l:  {label:"L（リットル）",    base:"ml", factor:1000},
+  ko: {label:"個",  base:"個",  factor:1},
+  mai:{label:"枚",  base:"枚",  factor:1},
+  hon:{label:"本",  base:"本",  factor:1},
+  pkn:{label:"パック", base:"パック", factor:1},
+  rol:{label:"ロール", base:"ロール", factor:1},
+  m:  {label:"m（メートル）", base:"m",  factor:1},
+  mai_set:{label:"食", base:"食", factor:1}
+};
+// 単価計算：1セットあたり価格 × セット数ではなく「総額 / 総量」
+// price=税込総額, qty=1つあたりの量, count=入数, sets=セット数, unit=単位キー
+function calcUnitPrice(price, qty, count, sets, unitKey, taxMode, taxRate){
+  qty   = toNum(qty);  count = toNum(count); sets = toNum(sets,1); price = toNum(price);
+  if(!UNITS[unitKey]) return null;
+  // NaN対策: !(x>0) は NaN も弾ける
+  if(!(qty>0) || !(count>0) || !(sets>0) || !(price>0)) return null;
+  if(taxMode==="in") price *= 1 + toNum(taxRate,10)/100;
+  const totalQty = qty * count * sets * UNITS[unitKey].factor;  // 基本単位(g/ml等)での総量
+  const unitPrice = price / totalQty;                            // 基本単位あたりの価格
+  return {unitPrice, totalQty, total:price, base:UNITS[unitKey].base};
+}
+function toNum(v, dflt){
+  if(v===undefined||v===null||v==="") return dflt!==undefined?dflt:NaN;
+  const n = parseFloat(String(v).replace(/[,，\s]/g,""));
+  return isFinite(n)?n:(dflt!==undefined?dflt:NaN);
+}
+// 比較結果：最安を返す（同率は複数返す）
+function compare(results){
+  const valid = results.filter(r=>r!==null);
+  if(!valid.length) return {winners:[], best:null};
+  const min = Math.min(...valid.map(r=>r.unitPrice));
+  const EPS = 1e-9;
+  const winners = valid.filter(r=>Math.abs(r.unitPrice-min)<EPS);
+  return {winners, best:min};
+}
+/*CALC_END*/
+
+let taxMode="none", seq=0, items=[];
+const $=id=>document.getElementById(id);
+
+function setTax(mode){
+  taxMode=mode;
+  $("tax-none").classList.toggle("on",mode==="none");
+  $("tax-in").classList.toggle("on",mode==="in");
+  render();
+}
+function addItem(data){
+  seq++;
+  const it = Object.assign({id:seq,name:"",price:"",qty:"",count:"",sets:"",unit:"g"}, data||{});
+  items.push(it);
+  render();
+}
+function delItem(id){
+  items = items.filter(x=>x.id!==id);
+  if(items.length===0) addItem();
+  else render();
+}
+function upd(id,key,val){
+  const it=items.find(x=>x.id===id); if(it){it[key]=val;}
+  renderResults();
+  saveDraft();
+}
+function unitOpts(sel){
+  return Object.entries(UNITS).map(([k,u])=>`<option value="${k}" ${k===sel?"selected":""}>${u.label}</option>`).join("");
+}
+function render(){
+  $("items").innerHTML = items.map(it=>`
+  <div class="item" id="item-${it.id}">
+    <span class="win-badge">⭐ 最安値</span>
+    <button class="del" onclick="delItem(${it.id})" aria-label="削除">✕</button>
+    <input class="item-name" type="text" placeholder="商品名（例：○○ ティッシュ）" value="${esc(it.name)}" oninput="upd(${it.id},'name',this.value)">
+    <div class="grid2" style="margin-bottom:8px">
+      <div><label>価格（円）</label><input type="number" inputmode="decimal" placeholder="2980" value="${esc(it.price)}" oninput="upd(${it.id},'price',this.value)"></div>
+      <div><label>1つあたりの量</label><input type="number" inputmode="decimal" placeholder="320" value="${esc(it.qty)}" oninput="upd(${it.id},'qty',this.value)"></div>
+    </div>
+    <div class="grid3">
+      <div><label>入数（個数）</label><input type="number" inputmode="numeric" placeholder="24" value="${esc(it.count)}" oninput="upd(${it.id},'count',this.value)"></div>
+      <div><label>セット数</label><input type="number" inputmode="numeric" placeholder="1" value="${esc(it.sets)}" oninput="upd(${it.id},'sets',this.value)"></div>
+      <div><label>単位</label><select onchange="upd(${it.id},'unit',this.value)">${unitOpts(it.unit)}</select></div>
+    </div>
+    <div class="unit-price" id="res-${it.id}"></div>
+  </div>`).join("");
+  renderResults();
+}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+function fmt(n){
+  if(n>=100) return n.toFixed(1);
+  if(n>=1) return n.toFixed(2);
+  return n.toFixed(3);
+}
+function unitSuffix(k){return UNITS[k]?UNITS[k].base:"";}
+function renderResults(){
+  const taxRate = $("tax-rate").value;
+  const results = items.map(it=>calcUnitPrice(it.price,it.qty,it.count,it.sets,it.unit,taxMode,taxRate));
+  const {winners} = compare(results);
+  items.forEach((it,i)=>{
+    const el=$("res-"+it.id); if(!el) return;
+    const card=$("item-"+it.id);
+    const r=results[i];
+    if(!r){ el.innerHTML=`<span style="color:#bbb;font-size:.8rem">価格・量・入数を入力すると自動計算されます</span>`; card.classList.remove("best"); return;}
+    const isWin = winners.includes(r) && items.length>1;
+    card.classList.toggle("best",isWin);
+    let diff="";
+    if(!isWin && winners.length){
+      const d=(r.unitPrice-winners[0].unitPrice)/winners[0].unitPrice*100;
+      diff=`<div class="diff">最安より +${d.toFixed(1)}% 高い</div>`;
+    }
+    el.innerHTML=`1${unitSuffix(it.unit)}あたり <b>¥${fmt(r.unitPrice)}</b>　<small style="color:#888">（総量 ${fmt(r.totalQty)}${unitSuffix(it.unit)} ／ 合計 ¥${Math.round(r.total).toLocaleString()}）</small>${diff}`;
+  });
+}
+
+/* ---- 保存（localStorage） ---- */
+function saveDraft(){
+  try{ localStorage.setItem("tankakazu_draft", JSON.stringify({items, taxMode, category:$("category").value})); }catch(e){}
+}
+function loadDraft(){
+  try{
+    const d=JSON.parse(localStorage.getItem("tankakazu_draft")||"null");
+    if(d&&d.items&&d.items.length){ items=[]; taxMode=d.taxMode||"none"; setTax(taxMode);
+      $("category").value=d.category||"";
+      d.items.forEach(x=>addItem(x)); return;
+    }
+  }catch(e){}
+  addItem(); addItem();
+}
+function saveHistory(){
+  const valid = items.filter(it=>calcUnitPrice(it.price,it.qty,it.count,it.sets,it.unit,taxMode,$("tax-rate").value));
+  if(valid.length<2){ toast("比較できる商品を2件以上入力してください"); return; }
+  let list=[];
+  try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
+  list.unshift({date:new Date().toLocaleString("ja-JP"), category:$("category").value||"（カテゴリなし）", taxMode, items:JSON.parse(JSON.stringify(items))});
+  if(list.length>30) list=list.slice(0,30);
+  try{ localStorage.setItem("tankakazu_history", JSON.stringify(list)); }catch(e){}
+  renderHistory(); toast("保存しました ✅");
+}
+function renderHistory(){
+  let list=[];
+  try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
+  const el=$("history");
+  if(!list.length){ el.innerHTML=`<div class="empty">保存された比較はまだありません</div>`; return;}
+  el.innerHTML=list.map((h,i)=>`<div class="hist-item" onclick="restore(${i})">
+    <div>🏷️ ${esc(h.category)}<small>${esc(h.date)} ・ ${h.items.length}商品</small></div>
+    <button class="hist-del" onclick="event.stopPropagation();delHist(${i})">🗑</button></div>`).join("");
+}
+function restore(i){
+  let list=[]; try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
+  const h=list[i]; if(!h) return;
+  items=[]; seq=0; $("category").value=h.category==="（カテゴリなし）"?"":h.category;
+  setTax(h.taxMode||"none");
+  h.items.forEach(x=>addItem(x));
+  window.scrollTo({top:0,behavior:"smooth"});
+  toast("読み込みました");
+}
+function delHist(i){
+  let list=[]; try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
+  list.splice(i,1); localStorage.setItem("tankakazu_history",JSON.stringify(list));
+  renderHistory();
+}
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+$("tax-rate").addEventListener("input",()=>{renderResults(); saveDraft();});
+$("category").addEventListener("input",saveDraft);
+loadDraft(); renderHistory();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
