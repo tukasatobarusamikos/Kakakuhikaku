@@ -44,6 +44,9 @@ input:focus,select:focus{outline:none; border-color:var(--c-main); background:#f
 .btn{display:block; width:100%; padding:14px; border:none; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer;}
 .btn-add{background:#e8f5e9; color:var(--c-main-d); border:2px dashed var(--c-main); margin-bottom:10px;}
 .btn-save{background:var(--c-main); color:#fff; box-shadow:0 2px 6px rgba(15,157,88,.35);}
+.btn-clear{background:#fff;color:#ad3030;border:1.5px solid #e6bcbc;min-height:52px;margin-top:16px;}
+.clear-help{font-size:13px;color:#6f5555;margin:6px 2px 14px;line-height:1.6;}
+.btn[hidden]{display:none;}
 .tax-row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
 .rate{width:90px;}
 .chip{padding:8px 14px; border-radius:20px; border:1.5px solid var(--c-line); background:#fff; font-size:.85rem; cursor:pointer;}
@@ -173,10 +176,14 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
   <div id="result-list"></div>
 </section>
 <button class="btn btn-save" onclick="saveHistory()">💾 この比較を保存</button>
+<button class="btn btn-clear" id="clear-all" type="button" onclick="clearAllInputs()" aria-describedby="clear-help">すべてクリア</button>
+<p class="clear-help" id="clear-help">全商品の入力と比較結果だけをクリアします。保存した履歴は残ります。</p>
 
 <div class="card" style="margin-top:14px">
   <h2>🕘 保存した比較</h2>
   <div id="history"></div>
+  <button class="btn btn-clear" id="clear-history" type="button" onclick="clearSavedHistory()" aria-describedby="history-clear-help" hidden disabled>保存履歴を削除</button>
+  <p class="help" id="history-clear-help">履歴の削除は上の「すべてクリア」とは別です。削除前に確認が出ます。</p>
 </div>
 
 </main>
@@ -441,6 +448,8 @@ function renderHistory(){
   let list=[];
   try{ list=JSON.parse(localStorage.getItem("tankakazu_history")||"[]"); }catch(e){}
   const el=$("history");
+  $("clear-history").hidden=!list.length;
+  $("clear-history").disabled=!list.length;
   if(!list.length){ el.innerHTML=`<div class="empty">保存された比較はまだありません</div>`; return;}
   el.innerHTML=list.map((h,i)=>`<div class="hist-item" onclick="restore(${i})">
     <div>🏷️ ${esc(h.category)}<small>${esc(h.date)} ・ ${h.items.length}商品</small></div>
@@ -463,6 +472,31 @@ function delHist(i){
   list.splice(i,1);
   try{localStorage.setItem("tankakazu_history",JSON.stringify(list));}catch(e){toast("削除を保存できませんでした");return;}
   renderHistory();
+}
+function clearAllInputs(){
+  if(!window.confirm("全商品の入力と比較結果をクリアします。\n保存した比較履歴は消えません。クリアしますか？"))return;
+  const wasLoading=loadingDraft;
+  loadingDraft=true;
+  let storageCleared=true;
+  try{
+    localStorage.removeItem("tankakazu_draft");
+  }catch(e){storageCleared=false;}
+  try{
+    items=items.map(it=>({id:it.id,name:"",price:"",qty:"",count:"1",sets:"1",unit:"g"}));
+    $("category").value="";
+    $("tax-rate").value="10";
+    setTax("none");
+    $("items").scrollLeft=0;
+    updateProductPosition();
+  }finally{loadingDraft=wasLoading;}
+  toast(storageCleared?"入力をクリアしました。保存履歴は残っています":"入力はクリアしましたが、下書きを削除できませんでした");
+}
+function clearSavedHistory(){
+  if(!window.confirm("保存した比較履歴をすべて削除します。\n元に戻せません。削除しますか？\n入力中の商品は消えません。"))return;
+  try{localStorage.removeItem("tankakazu_history");}
+  catch(e){toast("保存履歴を削除できませんでした");return;}
+  renderHistory();
+  toast("保存履歴を削除しました。入力内容はそのままです");
 }
 function toast(msg){
   const t=$("toast"); t.textContent=msg; t.classList.add("show");
