@@ -122,6 +122,25 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 #items .quantity-preview{font-size:13px;}
 @media(min-width:351px){#items .grid2{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}}
 @media(prefers-reduced-motion:reduce){#items{scroll-behavior:auto;}}
+.product-tools{border-top:1px solid #dce6df;padding-top:10px;margin-top:14px;}
+.product-tools summary,.utility-panel summary{cursor:pointer;font-size:15px;font-weight:700;padding:6px 0;}
+.tool-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.small-button{border:1px solid #c6ddcd;border-radius:10px;background:#f2faf5;color:#215c3b;padding:10px 12px;min-height:44px;font:inherit;font-size:14px;cursor:pointer;}
+.product-tools label{font-size:14px;margin-top:10px;}
+.favorite-picker{font-size:16px;}
+.utility-panel{background:#fff;border-radius:14px;margin:16px 0;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.favorite-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #e3e7ea;padding:12px 0;}
+.favorite-row>div{min-width:0;overflow-wrap:anywhere;}
+.favorite-row small{display:block;font-size:13px;color:#56665e;}
+.favorite-row button{flex-shrink:0;}
+#result-sort{margin-top:4px;margin-bottom:8px;}
+.equal-amount{padding:10px;margin-top:10px;border-radius:8px;background:#f2f6f3;font-size:14px;color:#28533b;line-height:1.7;overflow-wrap:anywhere;}
+.equal-amount:empty{display:none;}
+.equal-amount small{display:block;font-size:13px;}
+#backup-status{margin-top:8px;font-size:14px;overflow-wrap:anywhere;}
+.backup-link{display:inline-block;min-height:44px;padding:8px;color:#12693b;text-decoration:underline;}
+.backup-link[hidden]{display:none;}
+#backup-import{font-size:16px;max-width:100%;}
 </style>
 </head>
 <body>
@@ -173,6 +192,10 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
 <section class="card" id="comparison-results" aria-labelledby="results-title">
   <h2 id="results-title">くらべた結果</h2>
   <span class="help">同じ量あたりの値段をくらべます。</span>
+  <label for="result-sort" style="margin-top:12px">結果の並び順</label>
+  <select id="result-sort" onchange="changeResultSort(this.value)" aria-describedby="result-sort-help"><option value="input">入力した順</option><option value="cheap">単価が安い順</option></select>
+  <span class="help" id="result-sort-help">入力カードの順番は変わりません。違う種類の単位は、種類ごとに分けて並べます。</span>
+  <details class="examples"><summary>「同じ量なら」の見方</summary><p class="help">単位の種類ごとに、先頭の商品と同じ合計量にそろえた税込の目安金額と差額を表示します。端数の量を実際に買えるという意味ではありません。</p></details>
   <div id="result-list"></div>
 </section>
 <button class="btn btn-save" onclick="saveHistory()">💾 この比較を保存</button>
@@ -186,6 +209,19 @@ footer{font-size:13px;max-width:640px;margin:auto;padding:16px;}
   <p class="help" id="history-clear-help">履歴の削除は上の「すべてクリア」とは別です。削除前に確認が出ます。</p>
 </div>
 
+<details class="utility-panel" id="favorites-panel"><summary id="favorites-summary">お気に入りの商品</summary>
+  <p class="help">各商品の「コピー・お気に入り」から登録できます。値段は保存せず、選んだ後に入力します。</p>
+  <div id="favorite-list"></div>
+</details>
+<details class="utility-panel" id="backup-panel"><summary>バックアップ・読み込み</summary>
+  <p class="help">入力中の比較・保存履歴（最大30件）・お気に入り・結果の並び順をJSONファイルに保存します。2人で渡すときもこのファイルを使います。自動同期ではありません。</p>
+  <button class="btn small-button" id="backup-export" type="button" onclick="exportBackup()">バックアップを保存</button>
+  <a id="backup-download" class="backup-link" hidden>もう一度ダウンロード</a>
+  <label for="backup-import" style="margin-top:16px">バックアップを読み込む</label>
+  <input id="backup-import" type="file" accept=".json,application/json" onchange="importBackup(this.files[0])" aria-describedby="backup-import-help">
+  <p class="help" id="backup-import-help">このツールが作った5MB以内のJSONを選びます。確認後、このブラウザのデータを置き換えます。必要なら先に現在のバックアップを保存してください。個人情報や秘密情報は入れず、ファイルを公開リポジトリへアップロードしないでください。</p>
+  <p id="backup-status" role="status" aria-live="polite"></p>
+</details>
 </main>
 <footer>入力した比較データは、この端末・ブラウザ内に保存します。2人で使っても自動共有はされません。ブラウザのデータ削除などで消える場合があります。</footer>
 <div class="toast" id="toast"></div>
@@ -235,6 +271,8 @@ function compare(results){
 /*CALC_END*/
 
 let taxMode="none", seq=0, items=[];
+let favorites=[],resultSort="input",backupBlobURL=null;
+const FAVORITES_KEY="tankakazu_favorites", VIEW_KEY="tankakazu_view";
 const $=id=>document.getElementById(id);
 
 function setTax(mode){
@@ -307,9 +345,16 @@ function render(){
       <span class="help" id="sets-help-${it.id}">ふつうは1。値段は全部の分。</span><span class="error-message" id="sets-error-${it.id}"></span>
     </div>
     <div class="quantity-preview" id="total-${it.id}"></div>
+    <details class="product-tools"><summary>コピー・お気に入り</summary>
+      <div class="tool-actions"><button class="small-button copy-product" type="button" onclick="copyProduct(${it.id})">この商品をコピー</button><button class="small-button save-favorite" type="button" onclick="saveFavorite(${it.id})">お気に入り登録</button></div>
+      <label for="favorite-${it.id}">お気に入りから入力</label>
+      <select class="favorite-picker" id="favorite-${it.id}" onchange="if(this.value!=='')applyFavorite(Number(this.value),${it.id});this.value='';" aria-describedby="favorite-help-${it.id}"></select>
+      <span class="help" id="favorite-help-${it.id}">容量と個数を入力します。値段は空欄に戻ります。</span>
+    </details>
   </section>`).join("");
-  $("result-list").innerHTML=items.map((it,i)=>`<section class="result-card" id="result-card-${it.id}" aria-labelledby="result-name-${it.id}"><h3 class="result-title" id="result-name-${it.id}">${productLabel(i)}</h3><span class="result-badge">⭐ 最安値</span><div class="unit-price" id="res-${it.id}" aria-live="polite"></div></section>`).join("");
+  $("result-list").innerHTML=items.map((it,i)=>`<section class="result-card" id="result-card-${it.id}" aria-labelledby="result-name-${it.id}"><h3 class="result-title" id="result-name-${it.id}">${productLabel(i)}</h3><span class="result-badge">⭐ 最安値</span><div class="unit-price" id="res-${it.id}" aria-live="polite"></div><div class="equal-amount" id="equal-${it.id}"></div></section>`).join("");
   items.forEach(updateUnitHints);
+  renderFavoritePickers();
   $("items").scrollLeft=oldLeft;
   renderResults();
   updateProductPosition();
@@ -376,6 +421,7 @@ function renderResults(){
     el.innerHTML='1'+r.base+'あたり <b>¥'+fmt(r.unitPrice)+'</b><small>合計量：'+r.totalQty.toLocaleString("ja-JP")+r.base+' ／ 税込合計：¥'+r.total.toLocaleString("ja-JP",{maximumFractionDigits:2})+'</small>'+diff+wait;
   });
   syncResultLabels();
+  renderEqualAmountAndSort(results);
 }
 function syncResultLabels(){
   items.forEach((it,i)=>{
@@ -498,13 +544,182 @@ function clearSavedHistory(){
   renderHistory();
   toast("保存履歴を削除しました。入力内容はそのままです");
 }
+/* ③ 商品コピー：元の商品には触れず、新しいカードを末尾に追加 */
+function copyProduct(id){
+  const source=items.find(it=>it.id===id);if(!source)return;
+  addItem({name:source.name,price:source.price,qty:source.qty,count:source.count,sets:source.sets,unit:source.unit});
+  toast("コピーしました。値段やお店を変更できます");
+}
+/* ④ お気に入り：名前と容量・入数だけを登録。価格や税込設定は含めない */
+function saveFavorite(id){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  if(!it.name.trim()){toast("お気に入り用に名前・お店を入力してください");return;}
+  let record;
+  try{record=normalizeFavorite(it);}catch(e){toast("容量・単位・個数・セット数を正しく入力してください");return;}
+  if(favorites.some(f=>JSON.stringify(f)===JSON.stringify(record))){toast("同じ商品が登録済みです");return;}
+  const next=[...favorites,record];
+  try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));}catch(e){toast("お気に入りを保存できませんでした");return;}
+  favorites=next;renderFavorites();toast("お気に入りに登録しました。値段は保存しません");
+}
+function applyFavorite(index,id){
+  const favorite=favorites[index],it=items.find(x=>x.id===id);if(!favorite||!it)return;
+  if((it.name||it.price||it.qty)&&!window.confirm("この商品の入力をお気に入りの内容に置き換えます。値段は空欄になります。続けますか？"))return;
+  Object.assign(it,{name:favorite.name,price:"",qty:favorite.qty,count:favorite.count,sets:favorite.sets,unit:favorite.unit});
+  render();saveDraft();toast("お気に入りを入力しました。値段を入れてください");
+}
+function deleteFavorite(index){
+  if(!favorites[index]||!window.confirm("このお気に入りを削除しますか？入力中の商品と比較履歴は消えません。"))return;
+  const next=favorites.filter((f,i)=>i!==index);
+  try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));}catch(e){toast("お気に入りを削除できませんでした");return;}
+  favorites=next;renderFavorites();toast("お気に入りを削除しました");
+}
+function favoriteDescription(f){return f.qty+(f.unit==="kg"?"kg":f.unit==="l"?"L":UNITS[f.unit].base)+" × "+f.count+"個 × "+f.sets+"セット";}
+function renderFavoritePickers(){
+  document.querySelectorAll('.favorite-picker').forEach(select=>{
+    select.replaceChildren();
+    const first=document.createElement('option');first.value="";first.textContent=favorites.length?"商品を選ぶ":"お気に入りはまだありません";select.append(first);select.disabled=!favorites.length;
+    favorites.forEach((f,index)=>{const option=document.createElement('option');option.value=String(index);option.textContent=f.name+"（"+favoriteDescription(f)+"）";select.append(option);});
+  });
+}
+function renderFavorites(){
+  $("favorites-summary").textContent="お気に入りの商品（"+favorites.length+"件）";
+  const list=$("favorite-list");list.replaceChildren();
+  if(!favorites.length){const empty=document.createElement('p');empty.className='help';empty.textContent='まだ登録されていません。';list.append(empty);}
+  favorites.forEach((f,index)=>{
+    const row=document.createElement('div');row.className='favorite-row';
+    const text=document.createElement('div'),name=document.createElement('strong'),small=document.createElement('small');name.textContent=f.name;small.textContent=favoriteDescription(f);text.append(name,small);
+    const button=document.createElement('button');button.type='button';button.className='small-button';button.textContent='削除';button.setAttribute('aria-label',f.name+'をお気に入りから削除');button.onclick=()=>deleteFavorite(index);
+    row.append(text,button);list.append(row);
+  });renderFavoritePickers();
+}
+/* ⑧ 結果だけを単価順にする。入力カードと履歴内の商品順は変更しない */
+function changeResultSort(value){
+  resultSort=value==='cheap'?'cheap':'input';
+  try{localStorage.setItem(VIEW_KEY,JSON.stringify({resultSort}));}catch(e){}
+  renderResults();
+}
+function yen(value){return value.toLocaleString('ja-JP',{minimumFractionDigits:2,maximumFractionDigits:2});}
+/* ⑨ 同じ種類の単位ごとに、入力順の先頭の商品の総量を基準にする */
+function renderEqualAmountAndSort(results){
+  const groups=new Map();
+  results.forEach((r,i)=>{if(r){if(!groups.has(r.base))groups.set(r.base,[]);groups.get(r.base).push({r,i});}});
+  items.forEach(it=>$("equal-"+it.id).replaceChildren());
+  groups.forEach(group=>{
+    if(group.length<2)return;
+    const reference=group[0],amount=reference.r.totalQty,min=Math.min(...group.map(x=>x.r.unitPrice));
+    const cheapest=min*amount;
+    group.forEach(({r,i})=>{
+      const el=$("equal-"+items[i].id),cost=r.unitPrice*amount,difference=Math.max(0,(r.unitPrice-min)*amount);
+      if(!Number.isFinite(cost)||!Number.isFinite(cheapest)||!Number.isFinite(difference)){el.textContent='同量比較の金額が大きすぎます。';return;}
+      const main=document.createElement('div');main.textContent='同じ'+amount.toLocaleString('ja-JP',{maximumSignificantDigits:12})+r.base+'なら 約'+yen(cost)+'円';
+      const diff=document.createElement('div');diff.textContent='最安との差：＋'+yen(difference)+'円';
+      const note=document.createElement('small');note.textContent='基準：'+productLabel(reference.i)+'の合計量。端数を含む比例計算の目安です。';
+      el.append(main,diff,note);
+    });
+  });
+  let order=items.map((it,i)=>i);
+  if(resultSort==='cheap'){
+    order=[];
+    groups.forEach(group=>group.slice().sort((a,b)=>a.r.unitPrice-b.r.unitPrice||a.i-b.i).forEach(entry=>order.push(entry.i)));
+    items.forEach((it,i)=>{if(!results[i])order.push(i);});
+  }
+  const list=$("result-list");order.forEach(i=>list.append($("result-card-"+items[i].id)));
+  $("result-sort").value=resultSort;
+}
+/* ⑤ バックアップ：読み込みは厳密に検証し、確認後にまとめて置き換える */
+function isRecord(v){return v!==null&&typeof v==='object'&&!Array.isArray(v);}
+function hasUnit(key){return typeof key==='string'&&Object.prototype.hasOwnProperty.call(UNITS,key);}
+function textValue(value){if(typeof value!=='string')throw new Error('文字列が不正です');return value;}
+function numericString(value,complete=false,integer=false){
+  if(typeof value!=='string'&&typeof value!=='number')throw new Error('数値の形式が不正です');
+  const text=String(value);if(text===''&&!complete)return '';
+  if(text.length>100||!/^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?$/i.test(text)||!Number.isFinite(Number(text)))throw new Error('数値が不正です');
+  if(complete&&(Number(text)<=0||(integer&&!Number.isInteger(Number(text)))))throw new Error('数値の範囲が不正です');
+  return text;
+}
+function normalizeItem(raw,complete=false){
+  if(!isRecord(raw)||!hasUnit(raw.unit))throw new Error('商品データが不正です');
+  const normalized={name:textValue(raw.name),price:numericString(raw.price,complete),qty:numericString(raw.qty,complete),count:numericString(raw.count,complete,true),sets:numericString(raw.sets,complete,true),unit:raw.unit};
+  if(complete){const r=calcUnitPrice(normalized.price,normalized.qty,normalized.count,normalized.sets,normalized.unit,'none',10);if(!r||!Number.isFinite(r.totalQty)||!Number.isFinite(r.unitPrice)||r.unitPrice<=0)throw new Error('計算範囲外の商品です');}
+  return normalized;
+}
+function normalizeFavorite(raw){
+  if(!isRecord(raw)||!hasUnit(raw.unit))throw new Error('お気に入りが不正です');
+  const f={name:textValue(raw.name),qty:numericString(raw.qty,true),count:numericString(raw.count,true,true),sets:numericString(raw.sets,true,true),unit:raw.unit};
+  if(!f.name.trim()||!Number.isFinite(Number(f.qty)*Number(f.count)*Number(f.sets)*UNITS[f.unit].factor))throw new Error('お気に入りが不正です');
+  return f;
+}
+function normalizeDraft(raw){
+  if(!isRecord(raw)||!Array.isArray(raw.items)||!raw.items.length||!['none','in'].includes(raw.taxMode))throw new Error('入力データが不正です');
+  const rate=raw.taxRate===undefined?'10':numericString(raw.taxRate);
+  if(rate!==''&&(Number(rate)<0||Number(rate)>100))throw new Error('税率が不正です');
+  return {category:textValue(raw.category),taxMode:raw.taxMode,taxRate:rate,items:raw.items.map(it=>normalizeItem(it))};
+}
+function normalizeHistory(raw){
+  if(!Array.isArray(raw)||raw.length>30)throw new Error('比較履歴は30件までです');
+  return raw.map(h=>{
+    if(!isRecord(h)||!Array.isArray(h.items)||h.items.length<2||!['none','in'].includes(h.taxMode))throw new Error('履歴データが不正です');
+    const rate=h.taxRate===undefined?'10':numericString(h.taxRate);
+    if((h.taxMode==='in'&&rate==='')||(rate!==''&&(Number(rate)<0||Number(rate)>100)))throw new Error('税率が不正です');
+    const normalized={date:textValue(h.date),category:textValue(h.category),taxMode:h.taxMode,taxRate:rate,items:h.items.map(it=>normalizeItem(it,true))};
+    if(new Set(normalized.items.map(it=>UNITS[it.unit].base)).size!==1)throw new Error('履歴の単位が不正です');
+    return normalized;
+  });
+}
+function loadExtraData(){
+  try{const raw=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');if(Array.isArray(raw))favorites=raw.map(normalizeFavorite);}catch(e){favorites=[];}
+  try{const raw=JSON.parse(localStorage.getItem(VIEW_KEY)||'null');if(raw&&raw.resultSort==='cheap')resultSort='cheap';}catch(e){}
+}
+function makeBackup(){
+  const history=JSON.parse(localStorage.getItem('tankakazu_history')||'[]');
+  const payload={app:'tanka-hikaku',version:1,exportedAt:new Date().toISOString(),draft:{category:$("category").value,taxMode,taxRate:$("tax-rate").value,items:items.map(it=>({name:it.name,price:it.price,qty:it.qty,count:it.count,sets:it.sets,unit:it.unit}))},history,favorites,view:{resultSort}};
+  validateBackup(payload);return payload;
+}
+function validateBackup(raw){
+  if(!isRecord(raw)||raw.app!=='tanka-hikaku'||raw.version!==1||!Array.isArray(raw.favorites))throw new Error('このツールのバックアップではないか、形式が不正です');
+  if(!isRecord(raw.view)||!['input','cheap'].includes(raw.view.resultSort))throw new Error('表示設定が不正です');
+  return {draft:normalizeDraft(raw.draft),history:normalizeHistory(raw.history),favorites:raw.favorites.map(normalizeFavorite),view:{resultSort:raw.view.resultSort}};
+}
+function backupStatus(text,error=false){$("backup-status").textContent=text;$("backup-status").style.color=error?'#ac2626':'#28533b';}
+function exportBackup(){
+  try{
+    const payload=makeBackup(),blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    if(blob.size>5*1024*1024)throw new Error('バックアップが5MBを超えています');
+    if(backupBlobURL)URL.revokeObjectURL(backupBlobURL);
+    backupBlobURL=URL.createObjectURL(blob);
+    const link=$("backup-download");link.href=backupBlobURL;link.download='tanka-backup-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json';link.hidden=false;link.textContent='バックアップJSONをダウンロード';link.click();
+    backupStatus('ダウンロードを開始しました。iPhoneでは「ファイル」アプリの保存先を確認してください。保存されない場合は上のリンクをタップしてください。');
+  }catch(e){backupStatus('保存できませんでした：'+e.message,true);}
+}
+async function importBackup(file){
+  if(!file)return;
+  try{
+    if(file.size>5*1024*1024)throw new Error('5MB以内のJSONを選んでください');
+    const normalized=validateBackup(JSON.parse(await file.text()));
+    if(!window.confirm('このバックアップで入力中の比較・保存履歴・お気に入り・結果の並び順を置き換えます。現在のデータは上書きされます。続けますか？')){backupStatus('読み込みをキャンセルしました。データは変わっていません。');return;}
+    const incoming=[['tankakazu_draft',normalized.draft],['tankakazu_history',normalized.history],[FAVORITES_KEY,normalized.favorites],[VIEW_KEY,normalized.view]];
+    const originals=incoming.map(([key])=>[key,localStorage.getItem(key)]);
+    try{incoming.forEach(([key,value])=>localStorage.setItem(key,JSON.stringify(value)));}
+    catch(e){let restored=true;originals.forEach(([key,value])=>{try{value===null?localStorage.removeItem(key):localStorage.setItem(key,value);}catch(err){restored=false;}});throw new Error(restored?'保存容量などの理由で読み込めませんでした。元のデータは維持しています。':'保存中にエラーが発生しました。画面の内容は保持していますが、保存状態を確認してください。');}
+    loadingDraft=true;
+    try{
+      seq=0;items=normalized.draft.items.map(it=>Object.assign({},it,{id:++seq}));
+      favorites=normalized.favorites;resultSort=normalized.view.resultSort;
+      $("category").value=normalized.draft.category;$("tax-rate").value=normalized.draft.taxRate;
+      setTax(normalized.draft.taxMode);renderHistory();renderFavorites();$("items").scrollLeft=0;updateProductPosition();
+    }finally{loadingDraft=false;}
+    backupStatus('読み込みました：履歴'+normalized.history.length+'件・お気に入り'+favorites.length+'件。入力中の商品も復元しました。');
+    toast('バックアップを読み込みました');
+  }catch(e){backupStatus('読み込めませんでした：'+e.message,true);}
+  finally{$("backup-import").value='';}
+}
 function toast(msg){
   const t=$("toast"); t.textContent=msg; t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
 $("tax-rate").addEventListener("input",()=>{renderResults(); saveDraft();});
 $("category").addEventListener("input",saveDraft);
-loadDraft(); renderHistory();
+loadExtraData();loadDraft();renderHistory();renderFavorites();
 </script>
 </body>
 </html>
